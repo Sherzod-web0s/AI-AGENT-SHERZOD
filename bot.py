@@ -2,31 +2,10 @@ import asyncio
 import json
 import os
 import random
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import threading
 from telethon import TelegramClient, events, functions, types as tg_types
 from google import genai
 from google.genai import types
 from gtts import gTTS
-
-# --- RENDER UCHUN MINI VEB-SERVER (Bot o'chib qolmasligi uchun) ---
-class SimpleHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"Sherzod AI Yordamchisi 24/7 ishlamoqda!")
-
-    def log_message(self, format, *args):
-        pass  # Konsolni ortiqcha yozuvlar bilan to'ldirmaslik uchun
-
-def run_web_server():
-    port = int(os.environ.get("PORT", 10000))
-    server = HTTPServer(('0.0.0.0', port), SimpleHandler)
-    print(f"🌐 Render porti ({port}) ochildi!")
-    server.serve_forever()
-
-threading.Thread(target=run_web_server, daemon=True).start()
-# ------------------------------------------------------------------
 
 API_ID = 32073192
 API_HASH = "cae6b9040c05cdf61b6c154e2689b7b4"
@@ -55,6 +34,7 @@ Muloqot qoidalari:
 "[SOS] Tushunarli, masala juda muhim ekan! Men hoziroq Sherzodga to'xtovsiz qo'ng'iroq qilib, siz haqingizda xabar beryapman. Agar juda shoshilinch bo'lsa, {ADMIN_PHONE} raqamiga yoki @{ADMIN_USERNAME} profiliga ham bog'lanishingiz mumkin."
 """
 
+# Lite modellarda limit ancha ko'p bo'ladi va 429 xatosini kam beradi:
 MODELLAR = [
     "models/gemini-3.5-flash-lite",
     "models/gemini-3.8-flash-lite",
@@ -285,6 +265,7 @@ async def handler(event):
         
         for model_nomi in MODELLAR:
             try:
+                # Oddiy suhbatda limit tugab qolmasligi uchun google_search olib tashlandi
                 response = await asyncio.to_thread(
                     client_ai.models.generate_content,
                     model=model_nomi,
@@ -331,6 +312,6 @@ async def handler(event):
         except Exception:
             pass
 
-print("🚀 Serverga moslangan Mukammal Yordamchi ishga tushdi!")
+print("🚀 Lite-modelli tezkor Yordamchi ishga tushdi!")
 client_tg.start()
 client_tg.run_until_disconnected()
